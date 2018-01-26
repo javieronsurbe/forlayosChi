@@ -1,10 +1,15 @@
 package main
 
 import (
+	"log"
 	"github.com/go-chi/chi"
 	"net/http"
-	"golang.org/x/net/context"
 	"github.com/go-chi/render"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"forlayos/rpc"
+	"net"
+	"github.com/soheilhy/cmux"
 )
 
 var (
@@ -17,7 +22,7 @@ var (
 type Forlayo struct {
 	Id     string
 	Name   string
-	Number int
+	Number int32
 	Price  float32
 }
 
@@ -72,7 +77,39 @@ func ForlayoCtx(next http.Handler) http.Handler {
 	})
 }
 
+type ForlayosImpl struct {
+}
+
+func (f ForlayosImpl) ListForlayos(empty *rpc.Empty, stream rpc.Forlayos_ListForlayosServer) error {
+	log.Println("List Forlayos")
+	for _, forlayo := range forlayosMap {
+		forlayoRPC := &rpc.Forlayo{
+			Id:     forlayo.Id,
+			Name:   forlayo.Name,
+			Number: forlayo.Number,
+			Price:  forlayo.Price,
+		}
+		log.Println(forlayo)
+		stream.Send(forlayoRPC)
+	}
+	return nil
+}
+
 func main() {
+	lis, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mux := cmux.New(lis)
+
+	restListener := mux.Match(cmux.HTTP1HeaderField("content-type", "application/json"))
+	grpcListener := mux.Match(cmux.Any())
+
+	//GRPC Server
+	grpcServer := grpc.NewServer()
+	rpc.RegisterForlayosServer(grpcServer, ForlayosImpl{})
+
 	r := chi.NewRouter()
 
 	r.Route("/forlayos", func(r chi.Router) {
@@ -85,6 +122,12 @@ func main() {
 			r.Delete("/", deleteForlayo) // DELETE /forlayos/123
 		})
 	})
+	chiServer := &http.Server{Handler: r}
 
-	http.ListenAndServe(":8080", r)
+	go grpcServer.Serve(grpcListener)
+	go chiServer.Serve(restListener)
+
+	log.Print("Starting server at port 8080")
+
+	mux.Serve()
 }

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package rpc;
+
+// Stream de forlayos
+service Forlayos {
+    rpc ListForlayos (Empty) returns (stream Forlayo) {
+    }
+}
+
+// Mensaje vacío ya qu eno esperamos ningún parametro de entrada
+message Empty {
+}
+
+// Tipo forlayo para la respuesta
+message Forlayo {
+    string id = 1;
+    string name = 2;
+    int32 number = 3;
+    float price = 4;
+}
