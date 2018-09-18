@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/go-chi/chi"
-	"net/http"
-	"golang.org/x/net/context"
 	"github.com/go-chi/render"
+	"golang.org/x/net/context"
+	"net/http"
 )
 
 var (
@@ -15,10 +15,10 @@ var (
 )
 
 type Forlayo struct {
-	Id     string
-	Name   string
-	Number int
-	Price  float32
+	Id     string  `json:"id"`
+	Name   string  `json:"name"`
+	Number int     `json:"number"`
+	Price  float32 `json:"price"`
 }
 
 func listForlayos(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +32,7 @@ func createForlayo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	forlayosMap[f.Id] = f
+	w.WriteHeader(http.StatusCreated)
 	render.JSON(w, r, f)
 }
 
