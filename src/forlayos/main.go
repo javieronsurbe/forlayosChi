@@ -85,6 +85,6 @@ func main() {
 			r.Delete("/", deleteForlayo) // DELETE /forlayos/123
 		})
 	})
-
+	println("Listen on 8080")
 	http.ListenAndServe(":8080", r)
 }
